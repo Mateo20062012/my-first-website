@@ -25,6 +25,7 @@
             --input-bg: #f1f5f9;
             --simple-color: #94a3b8;
             --compound-color: #1da1f2;
+            --row-hover: #f1f5f9;
         }
 
         [data-theme="dark"] {
@@ -34,6 +35,7 @@
             --card-bg: #1e293b;
             --border: #334155;
             --input-bg: #0f172a;
+            --row-hover: #1e293b;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; transition: background-color 0.3s ease, color 0.3s ease; }
@@ -80,6 +82,17 @@
             min-height: 500px;
             display: flex;
             flex-direction: column;
+            margin-bottom: 2rem;
+        }
+
+        .history-card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+            margin-top: 2rem;
+            overflow-x: auto;
         }
 
         .input-group { margin-bottom: 1.5rem; }
@@ -99,10 +112,32 @@
         .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-light); }
         .stat-value { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
 
+        .btn-save {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 700;
+            margin-top: 1.5rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-save:hover { background: var(--primary-hover); transform: scale(1.02); }
+
         h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px; }
         .subtitle { color: var(--text-light); margin-bottom: 2rem; }
 
         .chart-container { flex: 1; position: relative; margin-top: 1rem; }
+
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; text-align: left; }
+        th { padding: 1rem; border-bottom: 2px solid var(--border); font-size: 0.8rem; text-transform: uppercase; color: var(--text-light); }
+        td { padding: 1rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        tr:hover td { background: var(--row-hover); }
+
+        .empty-history { text-align: center; padding: 2rem; color: var(--text-light); font-style: italic; }
 
         @media (max-width: 900px) {
             .finance-grid { grid-template-columns: 1fr; }
@@ -154,22 +189,46 @@
                     <div class="stat-label" style="color: var(--primary);">The "Compound Gain" Difference</div>
                     <div class="stat-value" id="difference-value" style="font-size: 1.5rem;">$0</div>
                 </div>
+
+                <button class="btn-save" id="save-btn">Save to History</button>
             </aside>
 
-            <main class="graph-card">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h3 id="graph-title">Growth Comparison</h3>
-                    <div style="font-size: 0.8rem; display: flex; gap: 15px;">
-                        <span style="display: flex; align-items: center; gap: 5px;">
-                            <div style="width: 10px; height: 10px; background: var(--simple-color); border-radius: 2px;"></div> Simple
-                        </span>
-                        <span style="display: flex; align-items: center; gap: 5px;">
-                            <div style="width: 10px; height: 10px; background: var(--compound-color); border-radius: 2px;"></div> Compound
-                        </span>
+            <main>
+                <div class="graph-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 id="graph-title">Growth Comparison</h3>
+                        <div style="font-size: 0.8rem; display: flex; gap: 15px;">
+                            <span style="display: flex; align-items: center; gap: 5px;">
+                                <div style="width: 10px; height: 10px; background: var(--simple-color); border-radius: 2px;"></div> Simple
+                            </span>
+                            <span style="display: flex; align-items: center; gap: 5px;">
+                                <div style="width: 10px; height: 10px; background: var(--compound-color); border-radius: 2px;"></div> Compound
+                            </span>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="financeChart"></canvas>
                     </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="financeChart"></canvas>
+
+                <div class="history-card">
+                    <h3>Comparison History</h3>
+                    <table id="history-table">
+                        <thead>
+                            <tr>
+                                <th>Principal</th>
+                                <th>Rate</th>
+                                <th>Years</th>
+                                <th>Simple</th>
+                                <th>Compound</th>
+                                <th>Difference</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body">
+                            <!-- History rows will go here -->
+                        </tbody>
+                    </table>
+                    <div id="empty-msg" class="empty-history">No history saved yet.</div>
                 </div>
             </main>
         </div>
@@ -186,10 +245,13 @@
         const yearsIn = document.getElementById('years');
         const yearsRange = document.getElementById('yearsRange');
 
-        // Output Elements
+        // Output & UI Elements
         const simpleTotalOut = document.getElementById('simple-total');
         const compoundTotalOut = document.getElementById('compound-total');
         const diffOut = document.getElementById('difference-value');
+        const saveBtn = document.getElementById('save-btn');
+        const historyBody = document.getElementById('history-body');
+        const emptyMsg = document.getElementById('empty-msg');
 
         let financeChart;
 
@@ -259,9 +321,7 @@
 
             for (let i = 0; i <= t; i++) {
                 labels.push(`Year ${i}`);
-                // Simple: A = P(1 + rt)
                 simpleData.push(Math.round(P * (1 + r * i)));
-                // Compound: A = P(1 + r)^t
                 compoundData.push(Math.round(P * Math.pow(1 + r, i)));
             }
 
@@ -280,10 +340,31 @@
             financeChart.update();
         }
 
+        function saveHistory() {
+            const P = parseFloat(principalIn.value) || 0;
+            const r = parseFloat(rateIn.value) || 0;
+            const t = parseInt(yearsIn.value) || 0;
+            const simple = simpleTotalOut.textContent;
+            const compound = compoundTotalOut.textContent;
+            const diff = diffOut.textContent;
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>$${P.toLocaleString()}</td>
+                <td>${r}%</td>
+                <td>${t}y</td>
+                <td>${simple}</td>
+                <td><strong style="color: var(--primary)">${compound}</strong></td>
+                <td><span style="color: var(--primary)">${diff}</span></td>
+            `;
+
+            historyBody.prepend(row);
+            emptyMsg.style.display = 'none';
+        }
+
         // Event Listeners
         [principalIn, rateIn, rateRange, yearsIn, yearsRange].forEach(el => {
             el.addEventListener('input', (e) => {
-                // Sync ranges and number inputs
                 if (e.target.id === 'rateRange') rateIn.value = e.target.value;
                 if (e.target.id === 'rate') rateRange.value = e.target.value;
                 if (e.target.id === 'yearsRange') yearsIn.value = e.target.value;
@@ -292,18 +373,18 @@
             });
         });
 
+        saveBtn.addEventListener('click', saveHistory);
+
         themeToggle.addEventListener('click', () => {
             const current = document.documentElement.getAttribute('data-theme');
             const next = current === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             
-            // Re-render chart to update colors
             financeChart.destroy();
             initChart();
             calculate();
         });
 
-        // Initialize
         window.onload = () => {
             initChart();
             calculate();
