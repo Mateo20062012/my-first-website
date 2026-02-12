@@ -1,4 +1,4 @@
-<!-- Last Updated: 2026-02-11 21:50 -->
+<!-- Last Updated: 2026-02-11 22:03 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -279,6 +279,17 @@
             background: var(--step-bg);
         }
 
+        .version-badge {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 4px 12px;
+            background: var(--primary);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
         @media (max-width: 768px) {
             header { padding: 1rem 5%; }
             nav a { display: none; }
@@ -331,7 +342,7 @@
         <h2>Selected Projects</h2>
         <div class="grid">
             <div class="gallery-item">Project Alpha</div>
-            <div class="gallery-item)Project Beta</div>
+            <div class="gallery-item">Project Beta</div>
             <div class="gallery-item">Project Gamma</div>
             <div class="gallery-item">Project Delta</div>
         </div>
@@ -362,7 +373,8 @@
     </section>
 
     <footer>
-        &copy; 2026 Your First Project. Built with &hearts; in VS Code.
+        <div>&copy; 2026 Your First Project. Built with &hearts; in VS Code.</div>
+        <span class="version-badge">Version 1.0.2 (Dark Mode Fix)</span>
     </footer>
 
     <script>
@@ -394,7 +406,7 @@
             }
         }
         
-        console.log("Site version 1.0.1 loaded successfully.");
+        console.log("Site version 1.0.2 loaded successfully.");
     </script>
 </body>
 </html>
