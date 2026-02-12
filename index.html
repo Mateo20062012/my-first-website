@@ -118,9 +118,9 @@
         const debugToggle = document.getElementById('debugToggle');
 
         async function chirp(text) {
-            // Updated to v1 stable endpoint and standard model ID
-            const model = "gemini-2.5-flash";
-            const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
+            // Reverting to v1beta and the specific preview model required for identity establishment
+            const model = "gemini-2.5-flash-preview-09-2025";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
             
             const payload = {
                 contents: [{ parts: [{ text: text }] }]
@@ -158,7 +158,7 @@
             output.classList.remove('error');
 
             try {
-                // Retry logic with backoff
+                // Retry logic with exponential backoff
                 let result;
                 for (let i = 0; i < 5; i++) {
                     try {
@@ -166,6 +166,7 @@
                         break; 
                     } catch (e) {
                         if (i === 4) throw e;
+                        // Retry with 1s, 2s, 4s, 8s, 16s delays
                         await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
                     }
                 }
