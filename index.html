@@ -1,4 +1,4 @@
-<!-- Last Updated: 2026-02-11 23:12 -->
+<!-- Last Updated: 2026-02-11 23:15 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -177,11 +177,11 @@
 
     <footer>
         <div>&copy; 2026 Tweetee AI Project.</div>
-        <span class="version-badge">Version 1.5.0 (Tweetee Brand)</span>
+        <span class="version-badge">Version 1.5.1 (Live Q&A Fix)</span>
     </footer>
 
     <script>
-        const apiKey = "";
+        const apiKey = ""; // Runtime automatically injects the key
         const userInput = document.getElementById('user-input');
         const askBtn = document.getElementById('ask-btn');
         const responseText = document.getElementById('response-text');
@@ -214,7 +214,7 @@
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }],
-                systemInstruction: { parts: [{ text: "You are Tweetee, a smart and witty AI assistant. Keep answers brief, clear, and engaging." }] }
+                systemInstruction: { parts: [{ text: "You are Tweetee, a smart, helpful, and witty AI bird. Your answers should be brief, informative, and sometimes include bird puns like 'Chirp' or 'Eggs-actly'. Focus on being a helpful assistant." }] }
             };
 
             try {
@@ -227,7 +227,11 @@
                 if (!response.ok) throw new Error('API Error');
 
                 const data = await response.json();
-                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Chirp! Something went wrong.";
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (!text) throw new Error('No content returned');
+                return text;
+
             } catch (error) {
                 if (retries < 5) {
                     const delay = Math.pow(2, retries) * 1000;
@@ -243,7 +247,7 @@
             const item = document.createElement('div');
             item.className = 'info-card';
             item.style.padding = '1rem';
-            item.style.marginBottom = '0';
+            item.style.marginBottom = '10px';
             item.innerHTML = `<strong>Chirp:</strong> ${query}`;
             historyList.prepend(item);
         };
@@ -259,10 +263,12 @@
 
             try {
                 const answer = await fetchAIResponse(query);
-                responseText.innerHTML = answer.replace(/\n/g, '<br>');
+                // Simple formatting for the response
+                responseText.innerHTML = answer.split('\n').map(line => `<p>${line}</p>`).join('');
                 addHistory(query);
             } catch (error) {
-                responseText.innerHTML = `<span style="color: #ef4444;">Bird down! The AI is overloaded. Try again soon.</span>`;
+                console.error(error);
+                responseText.innerHTML = `<span style="color: #ef4444;">Bird down! Tweetee is having trouble connecting to the sky. Please try again in a few seconds.</span>`;
             } finally {
                 askBtn.disabled = false;
                 spinner.style.display = 'none';
