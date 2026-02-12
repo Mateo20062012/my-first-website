@@ -92,6 +92,21 @@
         }
         [data-theme="dark"] .response-area { background: rgba(255,255,255,0.02); }
 
+        .sources-panel {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            display: none;
+        }
+        .sources-title { font-size: 0.85rem; font-weight: 700; color: var(--text-light); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 5px; }
+        .source-link { 
+            display: inline-block; padding: 4px 10px; background: rgba(29, 161, 242, 0.1); 
+            border-radius: 6px; font-size: 0.75rem; color: var(--primary); 
+            text-decoration: none; margin-right: 8px; margin-bottom: 8px;
+            border: 1px solid transparent; transition: 0.2s;
+        }
+        .source-link:hover { border-color: var(--primary); background: rgba(29, 161, 242, 0.2); }
+
         .loading-spinner {
             display: none; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3);
             border-radius: 50%; border-top-color: #fff; animation: spin 1s linear infinite;
@@ -130,18 +145,24 @@
     <div class="container">
         <section class="hero">
             <h1>Chirp Your Questions.</h1>
-            <p>Experience the new standard of helpfulness. Ask anything and get an instant chirp back from Tweetee.</p>
+            <p>Tweetee is now connected to the web. Ask anything and I'll search the world to find you the most up-to-date answer.</p>
             
             <div class="ai-interface">
                 <div class="input-group">
-                    <input type="text" id="user-input" placeholder="Why is the sky blue?">
+                    <input type="text" id="user-input" placeholder="What's the latest news on space exploration?">
                     <button class="btn" id="ask-btn">
                         <span class="loading-spinner" id="spinner"></span>
-                        <span id="btn-text">Chirp It</span>
+                        <span id="btn-text">Search & Chirp</span>
                     </button>
                 </div>
-                <div class="response-area" id="response-text">
-                    <span style="color: var(--text-light); font-style: italic;">Your answer will appear here...</span>
+                <div class="response-area" id="response-content">
+                    <div id="response-text">
+                        <span style="color: var(--text-light); font-style: italic;">Your grounded answer will appear here...</span>
+                    </div>
+                    <div class="sources-panel" id="sources-panel">
+                        <div class="sources-title">🌐 Sources Used:</div>
+                        <div id="sources-list"></div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -150,16 +171,16 @@
             <h2>The Tweetee Tech</h2>
             <div class="info-grid">
                 <div class="info-card">
-                    <h3>Fast Response</h3>
-                    <p>Optimized for speed, Tweetee processes your input through advanced neural networks for rapid feedback.</p>
+                    <h3>Real-Time Search</h3>
+                    <p>Tweetee doesn't just rely on training data. I search the live internet to ensure your facts are fresh and eggs-act.</p>
                 </div>
                 <div class="info-card">
-                    <h3>Smart Chirping</h3>
-                    <p>Designed to be witty and helpful, our AI personality makes learning new facts entertaining.</p>
+                    <h3>Verified Sources</h3>
+                    <p>Every grounded answer comes with clickable links so you can verify the information yourself. No more bird-brained rumors!</p>
                 </div>
                 <div class="info-card">
-                    <h3>Session Memory</h3>
-                    <p>Keep track of your recent chirps below to revisit interesting facts you've discovered.</p>
+                    <h3>Witty AI Personality</h3>
+                    <p>Smart, punny, and connected. I'm the bird's eye view of the entire internet, right in your pocket.</p>
                 </div>
             </div>
         </section>
@@ -174,13 +195,16 @@
 
     <footer>
         <div>&copy; 2026 Tweetee AI Project.</div>
-        <span class="version-badge">Version 2.0.0 (Premium UI)</span>
+        <span class="version-badge">Version 2.1.0 (Live Search Enabled)</span>
     </footer>
 
     <script>
+        const apiKey = ""; // API key is automatically handled by the environment
         const userInput = document.getElementById('user-input');
         const askBtn = document.getElementById('ask-btn');
         const responseText = document.getElementById('response-text');
+        const sourcesPanel = document.getElementById('sources-panel');
+        const sourcesList = document.getElementById('sources-list');
         const spinner = document.getElementById('spinner');
         const btnText = document.getElementById('btn-text');
         const historyList = document.getElementById('history-list');
@@ -201,23 +225,85 @@
             historyList.prepend(item);
         };
 
-        askBtn.addEventListener('click', () => {
+        async function fetchSearchGroundedAI(query, retries = 0) {
+            const model = "gemini-2.5-flash-preview-09-2025";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: query }] }],
+                systemInstruction: { 
+                    parts: [{ text: "You are Tweetee, an AI bird connected to the internet. Use the search tool to provide accurate, up-to-date answers. Be witty, bird-themed, and concise." }] 
+                },
+                tools: [{ "google_search": {} }]
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error('Search API Error');
+
+                const data = await response.json();
+                const candidate = data.candidates?.[0];
+                
+                return {
+                    text: candidate?.content?.parts?.[0]?.text || "I couldn't find a chirp for that.",
+                    sources: candidate?.groundingMetadata?.groundingAttributions?.map(a => ({
+                        uri: a.web?.uri,
+                        title: a.web?.title
+                    })) || []
+                };
+
+            } catch (error) {
+                if (retries < 5) {
+                    const delay = Math.pow(2, retries) * 1000;
+                    await new Promise(r => setTimeout(r, delay));
+                    return fetchSearchGroundedAI(query, retries + 1);
+                }
+                throw error;
+            }
+        }
+
+        askBtn.addEventListener('click', async () => {
             const query = userInput.value.trim();
             if (!query) return;
 
             askBtn.disabled = true;
             spinner.style.display = 'block';
-            btnText.textContent = 'Chirping...';
-            
-            // Mocking the interaction for now since external API connection is restricted
-            setTimeout(() => {
-                responseText.innerHTML = "Chirp! I'm currently in 'offline mode' while my creators polish my wings. Check back soon for full AI capabilities!";
+            btnText.textContent = 'Searching...';
+            responseText.innerHTML = '<span style="color: var(--text-light);">Scanning the skies...</span>';
+            sourcesPanel.style.display = 'none';
+
+            try {
+                const result = await fetchSearchGroundedAI(query);
+                
+                responseText.innerHTML = result.text.split('\n').map(p => `<p>${p}</p>`).join('');
+                
+                if (result.sources && result.sources.length > 0) {
+                    sourcesList.innerHTML = '';
+                    result.sources.forEach(source => {
+                        const link = document.createElement('a');
+                        link.href = source.uri;
+                        link.target = '_blank';
+                        link.className = 'source-link';
+                        link.textContent = source.title || source.uri;
+                        sourcesList.appendChild(link);
+                    });
+                    sourcesPanel.style.display = 'block';
+                }
+
                 addHistory(query);
+            } catch (error) {
+                responseText.innerHTML = `<span style="color: #ef4444;">Bird Strike! I couldn't connect to the internet. Please try again in a moment.</span>`;
+            } finally {
                 askBtn.disabled = false;
                 spinner.style.display = 'none';
-                btnText.textContent = 'Chirp It';
+                btnText.textContent = 'Search & Chirp';
                 userInput.value = '';
-            }, 800);
+            }
         });
 
         userInput.addEventListener('keypress', (e) => {
