@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tweetee | AI Q&A</title>
+    <title>Tweetee | Chirp Finance</title>
     
     <!-- FAVICON: Bird emoji for Tweetee theme -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐦</text></svg>">
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js for the interactive graph -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
         :root {
             --primary: #1da1f2;
@@ -17,298 +20,294 @@
             --bg: #f8fafc;
             --text: #1e293b;
             --text-light: #64748b;
-            --card-bg: rgba(255, 255, 255, 0.9);
-            --header-bg: rgba(255, 255, 255, 0.8);
-            --border: rgba(0, 0, 0, 0.05);
-            --input-bg: #ffffff;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --input-bg: #f1f5f9;
+            --simple-color: #94a3b8;
+            --compound-color: #1da1f2;
         }
 
         [data-theme="dark"] {
             --bg: #0f172a;
             --text: #f1f5f9;
             --text-light: #94a3b8;
-            --card-bg: rgba(30, 41, 59, 0.8);
-            --header-bg: rgba(15, 23, 42, 0.9);
-            --border: rgba(255, 255, 255, 0.1);
-            --input-bg: #1e293b;
+            --card-bg: #1e293b;
+            --border: #334155;
+            --input-bg: #0f172a;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; transition: background-color 0.3s ease, color 0.3s ease; }
-        html { scroll-behavior: smooth; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); line-height: 1.6; padding-top: 80px; }
 
         header {
             position: fixed; top: 0; width: 100%; padding: 1rem 10%; display: flex;
-            justify-content: space-between; align-items: center; background: var(--header-bg);
+            justify-content: space-between; align-items: center; background: rgba(255,255,255,0.8);
             backdrop-filter: blur(12px); z-index: 1000; border-bottom: 1px solid var(--border);
         }
+        [data-theme="dark"] header { background: rgba(15, 23, 42, 0.9); }
 
         .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary); text-decoration: none; display: flex; align-items: center; gap: 8px; }
-        nav { display: flex; align-items: center; }
-        nav a { margin-left: 1.5rem; text-decoration: none; color: var(--text); font-size: 0.9rem; font-weight: 500; transition: color 0.3s; }
-        nav a:hover { color: var(--primary); }
-
+        
         #theme-toggle {
             background: none; border: 1px solid var(--primary); color: var(--primary);
-            padding: 0.5rem; border-radius: 50%; margin-left: 1.5rem; cursor: pointer;
+            padding: 0.5rem; border-radius: 50%; cursor: pointer;
             width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
         }
 
-        .container { max-width: 1000px; margin: 0 auto; padding: 0 5%; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 2rem 5%; }
 
-        .hero {
-            padding-top: 10rem; padding-bottom: 4rem; text-align: center;
-            background: radial-gradient(circle at top right, rgba(29, 161, 242, 0.15), transparent 50%);
-        }
-        .hero h1 { font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 800; margin-bottom: 1rem; letter-spacing: -1.5px; }
-        .hero p { color: var(--text-light); font-size: 1.1rem; max-width: 600px; margin: 0 auto 2.5rem; }
-
-        .ai-interface {
-            background: var(--card-bg); border: 1px solid var(--border);
-            border-radius: 24px; padding: 2rem; box-shadow: 0 20px 50px -12px rgba(0,0,0,0.1);
-            margin-bottom: 4rem;
+        .finance-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            align-items: start;
         }
 
-        .input-group { display: flex; gap: 10px; margin-bottom: 1.5rem; }
-        input[type="text"] {
-            flex: 1; padding: 1rem 1.5rem; border-radius: 12px; border: 1px solid var(--border);
+        .calculator-card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+        }
+
+        .graph-card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group { margin-bottom: 1.5rem; }
+        label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-light); }
+        
+        input[type="number"], input[type="range"] {
+            width: 100%; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid var(--border);
             background: var(--input-bg); color: var(--text); font-family: inherit; font-size: 1rem;
-            outline: none; transition: border-color 0.3s;
+            outline: none;
         }
-        input[type="text"]:focus { border-color: var(--primary); }
+        input:focus { border-color: var(--primary); }
 
-        .btn {
-            background: var(--primary); color: white; border: none; padding: 0.8rem 1.8rem;
-            border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s;
-            display: flex; align-items: center; gap: 8px; justify-content: center;
+        .stat-box {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;
         }
-        .btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .stat { padding: 1rem; border-radius: 12px; background: var(--input-bg); }
+        .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-light); }
+        .stat-value { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
 
-        .response-area {
-            min-height: 100px; padding: 1.5rem; border-radius: 12px;
-            background: rgba(0,0,0,0.02); border: 1px dashed var(--border);
-            text-align: left; position: relative;
-        }
-        [data-theme="dark"] .response-area { background: rgba(255,255,255,0.02); }
+        h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px; }
+        .subtitle { color: var(--text-light); margin-bottom: 2rem; }
 
-        .sources-panel {
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border);
-            display: none;
-        }
-        .sources-title { font-size: 0.85rem; font-weight: 700; color: var(--text-light); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 5px; }
-        .source-link { 
-            display: inline-block; padding: 4px 10px; background: rgba(29, 161, 242, 0.1); 
-            border-radius: 6px; font-size: 0.75rem; color: var(--primary); 
-            text-decoration: none; margin-right: 8px; margin-bottom: 8px;
-            border: 1px solid transparent; transition: 0.2s;
-        }
-        .source-link:hover { border-color: var(--primary); background: rgba(29, 161, 242, 0.2); }
+        .chart-container { flex: 1; position: relative; margin-top: 1rem; }
 
-        .loading-spinner {
-            display: none; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%; border-top-color: #fff; animation: spin 1s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 4rem; }
-        .info-card { background: var(--card-bg); padding: 2rem; border-radius: 20px; border: 1px solid var(--border); }
-        .info-card h3 { color: var(--primary); margin-bottom: 1rem; }
-
-        footer { text-align: center; padding: 4rem; color: var(--text-light); border-top: 1px solid var(--border); margin-top: 4rem; }
-        .version-badge {
-            display: inline-block; margin-top: 10px; padding: 6px 16px;
-            background: var(--primary); color: white; border-radius: 20px;
-            font-size: 0.8rem; font-weight: 600;
-        }
-
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
+            .finance-grid { grid-template-columns: 1fr; }
             header { padding: 1rem 5%; }
-            nav a:not(.essential) { display: none; }
-            .input-group { flex-direction: column; }
         }
     </style>
 </head>
 <body>
     <header>
-        <a href="#" class="logo"><span>🐦</span> Tweetee</a>
-        <nav>
-            <a href="#how-it-works">How it Works</a>
-            <a href="#capabilities">Capabilities</a>
-            <a href="#history" class="essential">History</a>
-            <button id="theme-toggle">🌓</button>
-        </nav>
+        <a href="#" class="logo"><span>🐦</span> Tweetee Finance</a>
+        <button id="theme-toggle">🌓</button>
     </header>
 
     <div class="container">
-        <section class="hero">
-            <h1>Chirp Your Questions.</h1>
-            <p>Tweetee is now connected to the web. Ask anything and I'll search the world to find you the most up-to-date answer.</p>
-            
-            <div class="ai-interface">
+        <h1>Smart Compound Interest.</h1>
+        <p class="subtitle">Watch your nest egg grow. Compare simple interest vs. compound interest over time.</p>
+
+        <div class="finance-grid">
+            <aside class="calculator-card">
                 <div class="input-group">
-                    <input type="text" id="user-input" placeholder="What's the latest news on space exploration?">
-                    <button class="btn" id="ask-btn">
-                        <span class="loading-spinner" id="spinner"></span>
-                        <span id="btn-text">Search & Chirp</span>
-                    </button>
+                    <label>Principal Investment ($)</label>
+                    <input type="number" id="principal" value="10000" step="100">
                 </div>
-                <div class="response-area" id="response-content">
-                    <div id="response-text">
-                        <span style="color: var(--text-light); font-style: italic;">Your grounded answer will appear here...</span>
-                    </div>
-                    <div class="sources-panel" id="sources-panel">
-                        <div class="sources-title">🌐 Sources Used:</div>
-                        <div id="sources-list"></div>
-                    </div>
+                
+                <div class="input-group">
+                    <label>Annual Interest Rate (%)</label>
+                    <input type="number" id="rate" value="7" step="0.1">
+                    <input type="range" id="rateRange" min="1" max="25" value="7" style="margin-top: 10px;">
                 </div>
-            </div>
-        </section>
 
-        <section id="how-it-works">
-            <h2>The Tweetee Tech</h2>
-            <div class="info-grid">
-                <div class="info-card">
-                    <h3>Real-Time Search</h3>
-                    <p>Tweetee doesn't just rely on training data. I search the live internet to ensure your facts are fresh and eggs-act.</p>
+                <div class="input-group">
+                    <label>Investment Period (Years)</label>
+                    <input type="number" id="years" value="20" min="1" max="50">
+                    <input type="range" id="yearsRange" min="1" max="50" value="20" style="margin-top: 10px;">
                 </div>
-                <div class="info-card">
-                    <h3>Verified Sources</h3>
-                    <p>Every grounded answer comes with clickable links so you can verify the information yourself. No more bird-brained rumors!</p>
-                </div>
-                <div class="info-card">
-                    <h3>Witty AI Personality</h3>
-                    <p>Smart, punny, and connected. I'm the bird's eye view of the entire internet, right in your pocket.</p>
-                </div>
-            </div>
-        </section>
 
-        <section id="history">
-            <h2>Recent Chirps</h2>
-            <div id="history-list" style="display: flex; flex-direction: column; gap: 10px;">
-                <p style="text-align: center; color: var(--text-light);">No chirps yet this session.</p>
-            </div>
-        </section>
+                <div class="stat-box">
+                    <div class="stat">
+                        <div class="stat-label">Simple Total</div>
+                        <div class="stat-value" id="simple-total">$0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Compound Total</div>
+                        <div class="stat-value" id="compound-total">$0</div>
+                    </div>
+                </div>
+
+                <div class="stat" style="margin-top: 1rem; background: rgba(29, 161, 242, 0.1); border: 1px solid var(--primary);">
+                    <div class="stat-label" style="color: var(--primary);">The "Compound Gain" Difference</div>
+                    <div class="stat-value" id="difference-value" style="font-size: 1.5rem;">$0</div>
+                </div>
+            </aside>
+
+            <main class="graph-card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 id="graph-title">Growth Comparison</h3>
+                    <div style="font-size: 0.8rem; display: flex; gap: 15px;">
+                        <span style="display: flex; align-items: center; gap: 5px;">
+                            <div style="width: 10px; height: 10px; background: var(--simple-color); border-radius: 2px;"></div> Simple
+                        </span>
+                        <span style="display: flex; align-items: center; gap: 5px;">
+                            <div style="width: 10px; height: 10px; background: var(--compound-color); border-radius: 2px;"></div> Compound
+                        </span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="financeChart"></canvas>
+                </div>
+            </main>
+        </div>
     </div>
 
-    <footer>
-        <div>&copy; 2026 Tweetee AI Project.</div>
-        <span class="version-badge">Version 2.1.0 (Live Search Enabled)</span>
-    </footer>
-
     <script>
-        const apiKey = ""; // API key is automatically handled by the environment
-        const userInput = document.getElementById('user-input');
-        const askBtn = document.getElementById('ask-btn');
-        const responseText = document.getElementById('response-text');
-        const sourcesPanel = document.getElementById('sources-panel');
-        const sourcesList = document.getElementById('sources-list');
-        const spinner = document.getElementById('spinner');
-        const btnText = document.getElementById('btn-text');
-        const historyList = document.getElementById('history-list');
+        const ctx = document.getElementById('financeChart').getContext('2d');
         const themeToggle = document.getElementById('theme-toggle');
+        
+        // Input Elements
+        const principalIn = document.getElementById('principal');
+        const rateIn = document.getElementById('rate');
+        const rateRange = document.getElementById('rateRange');
+        const yearsIn = document.getElementById('years');
+        const yearsRange = document.getElementById('yearsRange');
 
-        themeToggle.addEventListener('click', () => {
-            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', next);
-        });
+        // Output Elements
+        const simpleTotalOut = document.getElementById('simple-total');
+        const compoundTotalOut = document.getElementById('compound-total');
+        const diffOut = document.getElementById('difference-value');
 
-        const addHistory = (query) => {
-            if (historyList.querySelector('p')) historyList.innerHTML = '';
-            const item = document.createElement('div');
-            item.className = 'info-card';
-            item.style.padding = '1rem';
-            item.style.marginBottom = '10px';
-            item.innerHTML = `<strong>Chirp:</strong> ${query}`;
-            historyList.prepend(item);
-        };
+        let financeChart;
 
-        async function fetchSearchGroundedAI(query, retries = 0) {
-            const model = "gemini-2.5-flash-preview-09-2025";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-            
-            const payload = {
-                contents: [{ parts: [{ text: query }] }],
-                systemInstruction: { 
-                    parts: [{ text: "You are Tweetee, an AI bird connected to the internet. Use the search tool to provide accurate, up-to-date answers. Be witty, bird-themed, and concise." }] 
+        function initChart() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+
+            financeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Compound Interest',
+                            data: [],
+                            borderColor: '#1da1f2',
+                            backgroundColor: 'rgba(29, 161, 242, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointRadius: 0,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Simple Interest',
+                            data: [],
+                            borderColor: '#94a3b8',
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0,
+                            borderWidth: 2,
+                            pointRadius: 0
+                        }
+                    ]
                 },
-                tools: [{ "google_search": {} }]
-            };
-
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) throw new Error('Search API Error');
-
-                const data = await response.json();
-                const candidate = data.candidates?.[0];
-                
-                return {
-                    text: candidate?.content?.parts?.[0]?.text || "I couldn't find a chirp for that.",
-                    sources: candidate?.groundingMetadata?.groundingAttributions?.map(a => ({
-                        uri: a.web?.uri,
-                        title: a.web?.title
-                    })) || []
-                };
-
-            } catch (error) {
-                if (retries < 5) {
-                    const delay = Math.pow(2, retries) * 1000;
-                    await new Promise(r => setTimeout(r, delay));
-                    return fetchSearchGroundedAI(query, retries + 1);
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: textColor }
+                        },
+                        y: {
+                            grid: { color: gridColor },
+                            ticks: { 
+                                color: textColor,
+                                callback: value => '$' + value.toLocaleString() 
+                            }
+                        }
+                    }
                 }
-                throw error;
-            }
+            });
         }
 
-        askBtn.addEventListener('click', async () => {
-            const query = userInput.value.trim();
-            if (!query) return;
+        function calculate() {
+            const P = parseFloat(principalIn.value) || 0;
+            const r = (parseFloat(rateIn.value) || 0) / 100;
+            const t = parseInt(yearsIn.value) || 0;
 
-            askBtn.disabled = true;
-            spinner.style.display = 'block';
-            btnText.textContent = 'Searching...';
-            responseText.innerHTML = '<span style="color: var(--text-light);">Scanning the skies...</span>';
-            sourcesPanel.style.display = 'none';
+            const labels = [];
+            const simpleData = [];
+            const compoundData = [];
 
-            try {
-                const result = await fetchSearchGroundedAI(query);
-                
-                responseText.innerHTML = result.text.split('\n').map(p => `<p>${p}</p>`).join('');
-                
-                if (result.sources && result.sources.length > 0) {
-                    sourcesList.innerHTML = '';
-                    result.sources.forEach(source => {
-                        const link = document.createElement('a');
-                        link.href = source.uri;
-                        link.target = '_blank';
-                        link.className = 'source-link';
-                        link.textContent = source.title || source.uri;
-                        sourcesList.appendChild(link);
-                    });
-                    sourcesPanel.style.display = 'block';
-                }
-
-                addHistory(query);
-            } catch (error) {
-                responseText.innerHTML = `<span style="color: #ef4444;">Bird Strike! I couldn't connect to the internet. Please try again in a moment.</span>`;
-            } finally {
-                askBtn.disabled = false;
-                spinner.style.display = 'none';
-                btnText.textContent = 'Search & Chirp';
-                userInput.value = '';
+            for (let i = 0; i <= t; i++) {
+                labels.push(`Year ${i}`);
+                // Simple: A = P(1 + rt)
+                simpleData.push(Math.round(P * (1 + r * i)));
+                // Compound: A = P(1 + r)^t
+                compoundData.push(Math.round(P * Math.pow(1 + r, i)));
             }
+
+            const finalSimple = simpleData[simpleData.length - 1];
+            const finalCompound = compoundData[compoundData.length - 1];
+
+            // Update UI
+            simpleTotalOut.textContent = '$' + finalSimple.toLocaleString();
+            compoundTotalOut.textContent = '$' + finalCompound.toLocaleString();
+            diffOut.textContent = '$' + (finalCompound - finalSimple).toLocaleString();
+
+            // Update Chart
+            financeChart.data.labels = labels;
+            financeChart.data.datasets[0].data = compoundData;
+            financeChart.data.datasets[1].data = simpleData;
+            financeChart.update();
+        }
+
+        // Event Listeners
+        [principalIn, rateIn, rateRange, yearsIn, yearsRange].forEach(el => {
+            el.addEventListener('input', (e) => {
+                // Sync ranges and number inputs
+                if (e.target.id === 'rateRange') rateIn.value = e.target.value;
+                if (e.target.id === 'rate') rateRange.value = e.target.value;
+                if (e.target.id === 'yearsRange') yearsIn.value = e.target.value;
+                if (e.target.id === 'years') yearsRange.value = e.target.value;
+                calculate();
+            });
         });
 
-        userInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') askBtn.click();
+        themeToggle.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            
+            // Re-render chart to update colors
+            financeChart.destroy();
+            initChart();
+            calculate();
         });
+
+        // Initialize
+        window.onload = () => {
+            initChart();
+            calculate();
+        };
     </script>
 </body>
 </html>
