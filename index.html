@@ -84,6 +84,7 @@
             width: 100%;
             max-width: 600px;
             display: none;
+            word-break: break-all;
         }
 
         .error { color: #ef4444; border-left-color: #ef4444 !important; }
@@ -109,7 +110,7 @@
     <div id="debug" class="debug-panel"></div>
 
     <script>
-        const apiKey = ""; // Runtime provides this
+        const apiKey = ""; // Provided by the environment
         const promptInput = document.getElementById('prompt');
         const sendBtn = document.getElementById('sendBtn');
         const output = document.getElementById('output');
@@ -117,9 +118,9 @@
         const debugToggle = document.getElementById('debugToggle');
 
         async function chirp(text) {
-            // Using the precise model and version endpoint
-            const model = "gemini-2.5-flash-preview-09-2025";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            // Updated to v1 stable endpoint and standard model ID
+            const model = "gemini-2.5-flash";
+            const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
             
             const payload = {
                 contents: [{ parts: [{ text: text }] }]
@@ -127,7 +128,9 @@
 
             const response = await fetch(url, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json"
+                },
                 body: JSON.stringify(payload)
             });
 
@@ -135,11 +138,12 @@
             
             if (debugToggle.checked) {
                 debug.style.display = 'block';
-                debug.textContent = JSON.stringify({ status: response.status, data }, null, 2);
+                debug.textContent = `URL: ${url.split('?')[0]}?key=HIDDEN\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`;
             }
 
             if (!response.ok) {
-                throw new Error(data.error?.message || "Unknown bird strike!");
+                const msg = data.error?.message || "Unknown bird strike!";
+                throw new Error(msg);
             }
 
             return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response received.";
@@ -154,7 +158,7 @@
             output.classList.remove('error');
 
             try {
-                // Exponential backoff logic
+                // Retry logic with backoff
                 let result;
                 for (let i = 0; i < 5; i++) {
                     try {
