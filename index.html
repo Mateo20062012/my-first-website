@@ -1,10 +1,15 @@
-<!-- Last Updated: 2026-02-11 22:46 -->
+<!-- Last Updated: 2026-02-11 23:05 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern UI | Home</title>
+    
+    <!-- FAVICON: This is the code that changes the tab icon -->
+    <!-- You can change the emoji below (currently 🚀) to any emoji you like! -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
@@ -102,29 +107,29 @@
     </header>
 
     <section class="hero">
-        <h1>Deployment Live.</h1>
-        <p>Your website is now successfully synced between VS Code, GitHub, and Vercel. Every save you make will now appear online automatically.</p>
-        <a href="#features" class="btn">Explore Features</a>
+        <h1>Favicon Updated!</h1>
+        <p>Look at your browser tab—you should see a 🚀 icon. I've added a clever SVG trick that lets you use any emoji as a logo.</p>
+        <a href="#features" class="btn">Learn How It Works</a>
     </section>
 
     <section id="features" class="features">
         <div class="card">
-            <h3>Fast Updates</h3>
-            <p>Pushing code to GitHub triggers an instant build on Vercel's global edge network.</p>
+            <h3>Emoji Icons</h3>
+            <p>We used a <code>data:image</code> URL to turn a Rocket emoji into a professional-looking favicon.</p>
         </div>
         <div class="card">
-            <h3>Dark Mode</h3>
-            <p>Fully integrated theme switching with persistent local storage for user preferences.</p>
+            <h3>Zero Files</h3>
+            <p>This method requires no extra image uploads, keeping your single-file setup clean and fast.</p>
         </div>
         <div class="card">
-            <h3>Responsive</h3>
-            <p>A mobile-first layout that looks great on everything from phones to large monitors.</p>
+            <h3>Full Customization</h3>
+            <p>Simply replace the rocket in the code with any other emoji to instantly change your brand.</p>
         </div>
     </section>
 
     <footer>
-        <div>&copy; 2026 Live Production Site.</div>
-        <span class="version-badge">Version 1.1.0 (Stable)</span>
+        <div>&copy; 2026 Icon Customization.</div>
+        <span class="version-badge">Version 1.2.2 (Favicon Support)</span>
     </footer>
 
     <script>
@@ -150,7 +155,7 @@
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
             updateIcon(next);
-        }); 
+        });
 
         setInitialTheme();
     </script>
