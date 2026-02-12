@@ -1,11 +1,11 @@
-<!-- Last Updated: 2026-02-11 22:21 -->
+<!-- Last Updated: 2026-02-11 22:30 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern UI | Home</title>
-    <!-- Google Fonts for a premium look -->
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -57,16 +57,35 @@
             background: radial-gradient(circle at top right, var(--primary), transparent 40%);
         }
 
+        .hero h1 { font-size: clamp(2.5rem, 8vw, 4.5rem); margin-bottom: 1.5rem; font-weight: 600; }
+        .hero p { font-size: 1.25rem; color: var(--text-light); max-width: 700px; margin-bottom: 2rem; }
+
+        .btn {
+            background: var(--primary); color: white; padding: 1rem 2.5rem;
+            border-radius: 50px; text-decoration: none; font-weight: 600;
+            transition: all 0.3s; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn:hover { transform: translateY(-3px); background: var(--primary-hover); }
+
         section { padding: 8rem 10%; }
+        h2 { font-size: 2.5rem; margin-bottom: 3rem; text-align: center; }
+
         .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
         .card { background: var(--card-bg); padding: 2.5rem; border-radius: 24px; border: 1px solid var(--border); transition: transform 0.3s; }
         .card:hover { transform: translateY(-10px); }
+        .card h3 { color: var(--primary); margin-bottom: 1rem; }
 
         footer { text-align: center; padding: 4rem; color: var(--text-light); border-top: 1px solid var(--border); }
         .version-badge {
             display: inline-block; margin-top: 10px; padding: 6px 16px;
             background: #10b981; color: white; border-radius: 20px;
-            font-size: 0.8rem; font-weight: 600; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+            font-size: 0.8rem; font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            header { padding: 1rem 5%; }
+            nav a { display: none; }
         }
     </style>
 </head>
@@ -74,7 +93,8 @@
     <header>
         <a href="#" class="logo">VisualUI.</a>
         <nav>
-            <a href="#">Home</a>
+            <a href="#features">Features</a>
+            <a href="#about">About</a>
             <button id="theme-toggle">
                 <svg id="theme-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             </button>
@@ -82,24 +102,57 @@
     </header>
 
     <section class="hero">
-        <h1>Repository Fixed.</h1>
-        <p>If you see this, Vercel is now successfully pulling from your <strong>my-first-website</strong> repository!</p>
+        <h1>Deployment Live.</h1>
+        <p>Your website is now successfully synced between VS Code, GitHub, and Vercel. Every save you make will now appear online automatically.</p>
+        <a href="#features" class="btn">Explore Features</a>
+    </section>
+
+    <section id="features" class="features">
+        <div class="card">
+            <h3>Fast Updates</h3>
+            <p>Pushing code to GitHub triggers an instant build on Vercel's global edge network.</p>
+        </div>
+        <div class="card">
+            <h3>Dark Mode</h3>
+            <p>Fully integrated theme switching with persistent local storage for user preferences.</p>
+        </div>
+        <div class="card">
+            <h3>Responsive</h3>
+            <p>A mobile-first layout that looks great on everything from phones to large monitors.</p>
+        </div>
     </section>
 
     <footer>
-        <div>&copy; 2026 Successful Deployment.</div>
-        <span class="version-badge">Version 1.0.5 (New Repo Linked)</span>
+        <div>&copy; 2026 Live Production Site.</div>
+        <span class="version-badge">Version 1.1.0 (Stable)</span>
     </footer>
 
     <script>
         const themeToggle = document.getElementById('theme-toggle');
         const themeIcon = document.getElementById('theme-icon');
+        
+        // Theme Logic
+        const setInitialTheme = () => {
+            const saved = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+            updateIcon(saved);
+        }
+
+        const updateIcon = (theme) => {
+            themeIcon.innerHTML = theme === 'dark' 
+                ? '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>'
+                : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+        }
+
         themeToggle.addEventListener('click', () => {
             let current = document.documentElement.getAttribute('data-theme');
             let next = current === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
-            themeIcon.innerHTML = next === 'dark' ? '<circle cx="12" cy="12" r="5"></circle>' : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+            localStorage.setItem('theme', next);
+            updateIcon(next);
         });
+
+        setInitialTheme();
     </script>
 </body>
 </html>
